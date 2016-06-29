@@ -22,23 +22,39 @@ var upload = multer({
 
 module.exports = function(app) {
 	app.get('/', function(req, res) {
-		// 
-		Post.find({
-			name: req.session.user.name
-		}, function(err, posts) {
-			if (err) {
-				posts = [];
-			}
+		//判断是否是第一页，并把请求的页数转换成 number 类型
+		Post.count({
 
-			posts.forEach(function(doc) {
-				doc.post = markdown.toHTML(doc.post);
+		}, function(err, total) {
+			var page = parseInt(req.query.p) || 1;
+			var query = Post.find({
+
 			});
-			res.render('index', {
-				title: '主页',
-				user: req.session.user,
-				posts: posts,
-				success: req.flash('success').toString(),
-				error: req.flash('error').toString()
+			query.skip((page - 1) * 10);
+			query.limit(10);
+
+			query.exec(function(err, posts) {
+				if (err) {
+					posts = [];
+					return res.redirect('/');
+				}
+				if (posts) {
+					posts.forEach(function(post) {
+						post.post = markdown.toHTML(post.post);
+					});
+				}
+				res.render('index', {
+					title: '主页',
+					posts: posts,
+					page: page,
+					isFirstPage: (page - 1) == 0,
+					isLastPage: ((page - 1) * 10 + posts.length) == total,
+					user: req.session.user,
+					success: req.flash('success').toString(),
+					error: req.flash('error').toString()
+				});
+
+
 			});
 		});
 	});
@@ -197,19 +213,37 @@ module.exports = function(app) {
 				return res.redirect('/'); //用户不存在则跳转到主页
 			}
 			//查询并返回该用户的所有文章
-			Post.find({
+			Post.count({
 				name: user.name
-			}, function(err, posts) {
-				if (err) {
-					req.flash('error', err);
-					return res.redirect('/');
-				}
-				res.render('user', {
-					title: user.name,
-					posts: posts,
-					user: req.session.user,
-					success: req.flash('success').toString(),
-					error: req.flash('error').toString()
+			}, function(err, total) {
+				var page = parseInt(req.query.p) || 1;
+				var query = Post.find({
+					name: user.name
+				});
+				query.skip((page - 1) * 10);
+				query.limit(10);
+
+				query.exec(function(err, posts) {
+					if (err) {
+						posts = [];
+					} else {
+						if (posts) {
+							posts.forEach(function(post) {
+								post.post = markdown.toHTML(post.post);
+							});
+						}
+						res.render('index', {
+							title: user.name,
+							posts: posts,
+							page: page,
+							isFirstPage: (page - 1) == 0,
+							isLastPage: ((page - 1) * 10 + posts.length) == total,
+							user: req.session.user,
+							success: req.flash('success').toString(),
+							error: req.flash('error').toString()
+						});
+
+					}
 				});
 			});
 		});
