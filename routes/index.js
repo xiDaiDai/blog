@@ -235,6 +235,68 @@ module.exports = function(app) {
 
 
 
+	app.get('/edit/:name/:title', checkLogin);
+	app.get('/edit/:name/:title', function(req, res) {
+		var currentUser = req.session.user;
+		Post.findOne({
+			name: currentUser.name,
+			title: req.params.title
+		}, function(err, post) {
+			if (err) {
+				req.flash('error', err);
+				return res.redirect('back');
+			}
+			res.render('edit', {
+				title: '编辑',
+				post: post,
+				user: req.session.user,
+				success: req.flash('success').toString(),
+				error: req.flash('error').toString()
+			});
+		});
+	});
+
+
+	app.post('/edit/:name/:title', checkLogin);
+	app.post('/edit/:name/:title', function(req, res) {
+		var currentUser = req.session.user;
+		Post.update({
+			name: currentUser.name,
+			title: req.params.title,
+		}, {
+			$set: {
+				post: req.body.post
+			}
+		}, function(err) {
+			var url = encodeURI('/u/' + req.params.name + '/' + req.params.title);
+			if (err) {
+				req.flash('error', err);
+				return res.redirect(url); //出错！返回文章页
+			}
+			req.flash('success', '修改成功!');
+			res.redirect(url); //成功！返回文章页
+		});
+	});
+
+
+	app.get('/remove/:name/:title', checkLogin);
+	app.get('/remove/:name/:title', function(req, res) {
+		var currentUser = req.session.user;
+		Post.remove({
+			name: currentUser.name,
+			title: req.params.title
+		}, function(err) {
+			if (err) {
+				req.flash('error', err);
+				return res.redirect('back');
+			}
+			req.flash('success', '删除成功!');
+			res.redirect('/');
+		});
+	});
+
+
+
 	function checkLogin(req, res, next) {
 		if (!req.session.user) {
 			req.flash('error', '未登录!');
