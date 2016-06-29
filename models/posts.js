@@ -19,6 +19,7 @@ var postScheMa = new Schema({
 		type: Date,
 		default: Date.now
 	},
+	comments: []
 
 
 

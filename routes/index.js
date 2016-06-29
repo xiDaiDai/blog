@@ -1,10 +1,12 @@
 userModels = require('../models/users');
 postModels = require('../models/posts');
+commentModels = require('../models/comments');
 markdown = require('markdown').markdown;
 var mongoose = require('mongoose');
 mongoose.createConnection('mongodb://localhost/users');
 var User = userModels.user;
 var Post = postModels.post;
+var Comment = commentModels.comment;
 var multer = require('multer');
 var storage = multer.diskStorage({
 	destination: function(req, file, cb) {
@@ -223,6 +225,13 @@ module.exports = function(app) {
 				req.flash('error', err);
 				return res.redirect('/');
 			}
+
+			if (post) {
+				post.post = markdown.toHTML(post.post);
+				post.comments.forEach(function(comment) {
+					comment.comment = markdown.toHTML(comment.comment);
+				});
+			}
 			res.render('article', {
 				title: req.params.title,
 				post: post,
@@ -293,6 +302,42 @@ module.exports = function(app) {
 			req.flash('success', '删除成功!');
 			res.redirect('/');
 		});
+	});
+
+	app.post('/u/:name/:title', function(req, res) {
+
+		var currentUser = req.session.user;
+		var comment = new Comment({
+			name: req.body.name,
+			email: req.body.email,
+			title: req.params.title,
+			website: req.body.website,
+			comment: req.body.content
+		});
+		comment.save(function(err) {
+			if (err) {
+				req.flash('error', err);
+				return res.redirect('back');
+			}
+
+			Post.update({
+				name: currentUser.name,
+				title: req.params.title,
+			}, {
+				$push: {
+					comments: comment
+				}
+			}, function(err) {
+				if (err) {
+					req.flash('error', err);
+					return res.redirect('back');
+				}
+				req.flash('success', '留言成功!');
+				res.redirect('back');
+			});
+
+		});
+
 	});
 
 
