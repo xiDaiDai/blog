@@ -1,0 +1,8 @@
+<%- include header %>
+<ul class="archive">
+<% posts.forEach(function (post, index) { %>
+  <li><time><%= post.time %></time></li>
+  <li><a href="/u/<%= post.name %>/<%= post.title %>"><%= post.title %></a></li>
+<% }) %>
+</ul>
+<%- include footer %>

@@ -162,10 +162,12 @@ module.exports = function(app) {
 	app.post('/post', checkLogin);
 	app.post('/post', function(req, res) {
 		var currentUser = req.session.user;
+		var tags = [req.body.tag1, req.body.tag2, req.body.tag3];
 		var post = new Post({
 			name: currentUser.name,
 			title: req.body.title,
-			post: req.body.post
+			post: req.body.post,
+			tags: tags
 		});
 		post.save(function(err) {
 			if (err) {
@@ -374,7 +376,67 @@ module.exports = function(app) {
 
 	});
 
+	app.get('/archive', function(req, res) {
+		Post.find({
+			"name": 1,
+			"time": 1,
+			"title": 1
+		}, function(err, posts) {
+			if (err) {
+				req.flash('error', err);
+				return res.redirect('/');
+			}
+			res.render('archive', {
+				title: '存档',
+				posts: posts,
+				user: req.session.user,
+				success: req.flash('success').toString(),
+				error: req.flash('error').toString()
+			});
+		});
+	});
 
+
+	app.get('/tags', function(req, res) {
+
+		Post.distinct('tags', {
+			nane: req.session.user.name
+		}, function(err, docs) {
+			if (err) {
+				req.flash('error', err);
+				return res.redirect('/');
+			}
+			res.render('tags', {
+				title: '标签',
+				posts: docs,
+				user: req.session.user,
+				success: req.flash('success').toString(),
+				error: req.flash('error').toString()
+			});
+		});
+
+	});
+
+	// Model.distinct(field, conditions, callback);
+	app.get('/tags/:tag', function(req, res) {
+		Post.find({
+				tags: req.params.tag
+			},
+
+			function(err, posts) {
+				if (err) {
+					req.flash('error', err);
+					return res.redirect('/');
+				}
+				res.render('tag', {
+					title: 'TAG:' + req.params.tag,
+					posts: posts,
+					user: req.session.user,
+					success: req.flash('success').toString(),
+					error: req.flash('error').toString()
+				});
+			});
+	});
 
 	function checkLogin(req, res, next) {
 		if (!req.session.user) {

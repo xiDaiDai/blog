@@ -15,6 +15,7 @@ var postScheMa = new Schema({
 	title: String,
 	post: String,
 	name: String,
+	tags: [],
 	time: {
 		type: Date,
 		default: Date.now
