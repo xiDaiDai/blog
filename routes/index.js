@@ -185,6 +185,55 @@ module.exports = function(app) {
 	});
 
 
+	app.get('/u/:name', function(req, res) {
+		//检查用户是否存在
+		User.findOne({
+			name: req.params.name
+		}, function(err, user) {
+			if (!user) {
+				req.flash('error', '用户不存在!');
+				return res.redirect('/'); //用户不存在则跳转到主页
+			}
+			//查询并返回该用户的所有文章
+			Post.find({
+				name: user.name
+			}, function(err, posts) {
+				if (err) {
+					req.flash('error', err);
+					return res.redirect('/');
+				}
+				res.render('user', {
+					title: user.name,
+					posts: posts,
+					user: req.session.user,
+					success: req.flash('success').toString(),
+					error: req.flash('error').toString()
+				});
+			});
+		});
+	});
+
+
+	app.get('/u/:name/:title', function(req, res) {
+		Post.findOne({
+			name: req.params.name,
+			title: req.params.title
+		}, function(err, post) {
+			if (err) {
+				req.flash('error', err);
+				return res.redirect('/');
+			}
+			res.render('article', {
+				title: req.params.title,
+				post: post,
+				user: req.session.user,
+				success: req.flash('success').toString(),
+				error: req.flash('error').toString()
+			});
+		});
+	});
+
+
 
 	function checkLogin(req, res, next) {
 		if (!req.session.user) {
