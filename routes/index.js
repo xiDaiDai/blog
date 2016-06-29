@@ -253,6 +253,18 @@ module.exports = function(app) {
 
 
 	app.get('/u/:name/:title', function(req, res) {
+
+		Post.update({
+			name: req.params.name,
+			title: req.params.title
+		}, {
+			$inc: {
+				pv: 1
+			}
+		}, function(err) {
+			req.flash('success', 'liulam成功!');
+		});
+
 		Post.findOne({
 			name: req.params.name,
 			title: req.params.title

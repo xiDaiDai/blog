@@ -20,7 +20,11 @@ var postScheMa = new Schema({
 		type: Date,
 		default: Date.now
 	},
-	comments: []
+	comments: [],
+	pv: {
+		type: Number,
+		default: 1
+	}
 
 
 
